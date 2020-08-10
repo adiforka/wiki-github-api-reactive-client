@@ -69,8 +69,9 @@ public class SearchApplication {
                 .addShutdownHook(new Thread(compositeDisposable::dispose));
 
         compositeDisposable.add(
-                sendWikipediaQuery("java")
-                    .subscribe(System.out::println, System.out::println, () -> System.out.println("Completed"))
+                ObservableReader.from(System.in)
+                        .flatMap(this::sendWikipediaQuery)
+                        .subscribe(System.out::println, System.out::println, () -> System.out.println("Completed"))
         );
     }
 }
