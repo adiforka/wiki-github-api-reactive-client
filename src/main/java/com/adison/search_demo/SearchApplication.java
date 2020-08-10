@@ -1,6 +1,7 @@
 package com.adison.search_demo;
 
 import com.adison.search_demo.github.GithubService;
+import com.adison.search_demo.github.Repository;
 import com.adison.search_demo.wikipedia.Article;
 import com.adison.search_demo.wikipedia.WikipediaService;
 import io.reactivex.Observable;
@@ -15,6 +16,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+//look up docs for ReactiveX for operator descriptions
 public class SearchApplication {
 
     private final GithubService githubService = new GithubService(retrofitBuilder("https://api.github.com/"));
@@ -42,6 +44,14 @@ public class SearchApplication {
         return newList;
     }
 
+    //this is the zipper that says how to combine the two streams we're waiting for the results from
+    private List<String> combineResults(List<String> results, List<String> otherResults) {
+        List<String> newResult = new ArrayList<>();
+        newResult.addAll(results);
+        newResult.addAll(otherResults);
+        return newResult;
+    }
+
     //k-r-a-z-y
     private Observable<List<String>> sendWikipediaQuery(String query) {
         return wikipediaService.getArticles(query)
@@ -53,6 +63,16 @@ public class SearchApplication {
                 //not keep the app alive on their own in the absence of some standard thread (see below)
                 .subscribeOn(Schedulers.io());
 
+    }
+
+    //k-r-a-z-i-e-r
+    private Observable<List<String>> sendGithubQuery(String query) {
+        return githubService.getRepositories(query)
+                .flatMap(Observable::fromIterable)
+                .map(Repository::getName)
+                .reduce(new ArrayList<>(), this::combine)
+                .toObservable()
+                .subscribeOn(Schedulers.io());
     }
 
     public static void main(String[] args) throws InterruptedException {
@@ -68,10 +88,19 @@ public class SearchApplication {
         Runtime.getRuntime()
                 .addShutdownHook(new Thread(compositeDisposable::dispose));
 
-        compositeDisposable.add(
+        /*compositeDisposable.add(
                 ObservableReader.from(System.in)
                         .flatMap(this::sendWikipediaQuery)
                         .subscribe(System.out::println, System.out::println, () -> System.out.println("Completed"))
+        );*/
+
+        compositeDisposable.add(
+                ObservableReader.from(System.in)
+                        .flatMap(query -> Observable.zip(sendWikipediaQuery(query), sendGithubQuery(query), this::combineResults))
+                        .flatMap(Observable::fromIterable)
+                        .map(String::toLowerCase)
+                        .subscribe(System.out::println, System.out::println, () -> System.out.println("Completed"))
         );
+
     }
 }
