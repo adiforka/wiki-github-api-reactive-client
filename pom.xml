@@ -28,8 +28,9 @@
             <version>${retrofit.version}</version>
         </dependency>
         <dependency>
+            <!--make sure to get the right adapter here for rxjava2, cause there's also a v.1-->
             <groupId>com.squareup.retrofit2</groupId>
-            <artifactId>adapter-rxjava</artifactId>
+            <artifactId>adapter-rxjava2</artifactId>
             <version>${retrofit.version}</version>
         </dependency>
         <dependency>
@@ -41,7 +42,7 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>logging-interceptor</artifactId>
-            <version>4.8.0</version>
+            <version>3.14.3</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
