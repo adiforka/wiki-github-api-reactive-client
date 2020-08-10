@@ -15,6 +15,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 //look up docs for ReactiveX for operator descriptions
 public class SearchApplication {
@@ -96,6 +97,8 @@ public class SearchApplication {
 
         compositeDisposable.add(
                 ObservableReader.from(System.in)
+                        //sends requests only if it's been 5 seconds since the last enter stroke
+                        .debounce(5, TimeUnit.SECONDS)
                         .flatMap(query -> Observable.zip(sendWikipediaQuery(query), sendGithubQuery(query), this::combineResults))
                         .flatMap(Observable::fromIterable)
                         .map(String::toLowerCase)
